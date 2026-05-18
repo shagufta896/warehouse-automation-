@@ -1,0 +1,20 @@
+# SQLite database — NEVER commit this file.
+# It is created automatically on first run with empty tables.
+# Data only enters via CSV upload at POST /upload/
+inventory.db
+inventory.db-shm
+inventory.db-wal
+
+# Logs
+app.log
+
+# Uploaded CSVs (user data, not source code)
+app/uploads/*.csv
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Environment
+.env

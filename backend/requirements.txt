@@ -1,0 +1,20 @@
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+pandas==2.2.0
+numpy==1.26.3
+scikit-learn==1.4.0
+prophet==1.1.5
+matplotlib==3.8.2
+sqlalchemy==2.0.25
+pydantic==2.5.3
+pydantic-settings==2.1.0
+scipy==1.12.0
+joblib==1.3.2
+python-dotenv==1.0.0
+openpyxl==3.1.2
+passlib[bcrypt]==1.7.4
+python-jose[cryptography]==3.3.0
+xgboost==2.0.3
+python-multipart==0.0.9     # already needed for file upload, keep
+email-validator==2.1.0
+

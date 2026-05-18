@@ -1,0 +1,33 @@
+# Databases
+backend/inventory.db
+backend/inventory.db-shm
+backend/inventory.db-wal
+*.db
+*.sqlite3
+
+# Logs
+backend/app.log
+*.log
+
+# Environment variables
+.env
+backend/.env
+.env.*
+
+# Python Cache
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# VS Code / IDE settings
+.vscode/
+
+# Node (in case it is added later)
+node_modules/
+dist/
+
+# Uploaded CSVs / Temp files
+backend/app/uploads/*.csv

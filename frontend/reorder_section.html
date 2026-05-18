@@ -1,0 +1,136 @@
+    <div class="page" id="page-reorder">
+
+      <!-- ── Header row ──────────────────────────────────────────────── -->
+      <div class="table-header" style="margin-bottom:20px">
+        <h2 style="font-size:18px;font-weight:600">📦 Reorder Planning</h2>
+        <div class="actions" style="gap:10px;flex-wrap:wrap">
+
+          <!-- Backup Days Selector -->
+          <div style="display:flex;align-items:center;gap:8px;background:var(--bg2);border-radius:8px;padding:6px 12px">
+            <span style="font-size:12px;color:var(--text3);white-space:nowrap">🗄️ Backup Stock:</span>
+            <select class="select-box" id="globalBackupDays" onchange="onBackupDaysChange()"
+                    style="border:none;background:transparent;font-size:13px;font-weight:600;color:var(--accent);padding:0;min-width:90px">
+              <option value="3">3 days (tiny)</option>
+              <option value="5" selected>5 days (small)</option>
+              <option value="7">7 days (medium)</option>
+              <option value="14">14 days (large)</option>
+              <option value="30">30 days (bulk)</option>
+            </select>
+          </div>
+
+          <!-- Inventory size indicator pill -->
+          <div id="inventorySizePill"
+               style="font-size:12px;font-weight:600;letter-spacing:0.5px;height:36px;padding:0 14px;border-radius:8px;display:flex;align-items:center;justify-content:center;white-space:nowrap;background:rgba(34,211,238,0.12);border:1px solid rgba(34,211,238,0.3);color:#22d3ee;box-shadow:0 0 12px rgba(34,211,238,0.1)">
+            📦 Small Inventory
+          </div>
+
+          <select class="select-box" id="reorderFilter" onchange="loadReorderPlan()">
+            <option value="all">Show All</option>
+            <option value="today">Reorder Today</option>
+            <option value="tomorrow">Reorder Tomorrow</option>
+            <option value="7days">Next 7 Days</option>
+            <option value="10days">Next 10 Days</option>
+            <option value="ordered">Already Ordered</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="loadReorderPlan()">↻ Refresh Plan</button>
+        </div>
+      </div>
+
+      <!-- Backup days description banner -->
+      <div id="backupDaysBanner"
+           style="background:var(--bg2);border-left:3px solid var(--accent);border-radius:6px;
+                  padding:10px 16px;margin-bottom:16px;font-size:12px;color:var(--text2);line-height:1.6">
+        <strong style="color:var(--accent)">5-day backup</strong> —
+        Reorder points and storage caps are set for <strong>5 days</strong> of demand.
+        Increase backup days if you have more storage space; decrease for a lean / just-in-time operation.
+      </div>
+
+      <!-- ── Plan table ───────────────────────────────────────────────── -->
+      <div class="table-card">
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Stock</th>
+                <th>Reorder Point</th>
+                <th>Storage Cap</th>
+                <th>Days Left</th>
+                <th>Target Date</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="reorderPlanBody">
+              <tr><td colspan="8"><div class="empty-state"><div class="loading-spinner"></div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── Deep Analysis section ────────────────────────────────────── -->
+      <div style="margin-top:30px;border-top:1px solid var(--bg2);padding-top:20px">
+        <h3 style="font-size:14px;color:var(--text3);margin-bottom:15px">🔬 Detailed Reorder Analysis</h3>
+
+        <div class="forecast-controls" style="flex-wrap:wrap;gap:12px">
+          <div class="control-group">
+            <label>Select Product</label>
+            <input list="reorderProductList" class="form-input" id="reorderProduct"
+                   style="width:220px" placeholder="🔍 Search or select product…">
+            <datalist id="reorderProductList"></datalist>
+          </div>
+
+          <!-- Per-product backup days override -->
+          <div class="control-group">
+            <label>Backup Days (this product)</label>
+            <select class="select-box" id="productBackupDays">
+              <option value="">— use global setting —</option>
+              <option value="3">3 days</option>
+              <option value="5">5 days</option>
+              <option value="7">7 days</option>
+              <option value="14">14 days</option>
+              <option value="30">30 days</option>
+            </select>
+          </div>
+
+          <button class="btn btn-primary" onclick="runReorder()" style="align-self:flex-end">
+            ⚡ Run Deep Analysis
+          </button>
+        </div>
+
+        <!-- Loading -->
+        <div id="reorderLoading" style="display:none;text-align:center;padding:50px">
+          <div class="loading-spinner" style="width:30px;height:30px;border-width:3px;margin:0 auto"></div>
+          <p style="margin-top:12px;color:var(--text3)">Calculating reorder plan…</p>
+        </div>
+
+        <!-- Empty -->
+        <div id="reorderEmpty" class="empty-state">
+          <div class="icon">📦</div>
+          <p>Select a product and click Run Deep Analysis to calculate EOQ and reorder points</p>
+        </div>
+
+        <!-- Results -->
+        <div id="reorderResults" style="display:none;margin-top:15px">
+          <div class="metric-row" id="reorderMetrics"></div>
+
+          <!-- Filter pipeline breakdown -->
+          <div class="table-card" style="margin-top:16px">
+            <div class="table-header">
+              <h3>Calculation Breakdown</h3>
+              <span id="reorderInventoryLabel"
+                    style="font-size:12px;font-weight:600;padding:4px 12px;border-radius:6px;background:rgba(34,211,238,0.12);border:1px solid rgba(34,211,238,0.3);color:#22d3ee;box-shadow:0 0 12px rgba(34,211,238,0.1)"></span>
+            </div>
+            <div class="table-responsive">
+              <table><tbody id="reorderTableBody"></tbody></table>
+            </div>
+          </div>
+
+          <!-- Filter pipeline visual -->
+          <div class="table-card" style="margin-top:12px">
+            <div class="table-header"><h3>🔽 Filter Pipeline Applied</h3></div>
+            <div id="filterPipeline" style="padding:14px 18px;display:flex;flex-wrap:wrap;gap:8px;align-items:center"></div>
+          </div>
+        </div>
+      </div>
+    </div>

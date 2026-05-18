@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#07080f"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <title>Warehouse Automation — Smart Inventory & Retail Management</title>
+
+  <!-- ── FONTS ─────────────────────────────── -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- ── STYLES ─────────────────────────────── -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- ── LIBRARIES ─────────────────────────── -->
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
+  <!-- jsPDF (for PDF bill generation) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+
+<body>
+
+<!-- ════════════════════════════════════════════
+     SIDEBAR OVERLAY (mobile)
+════════════════════════════════════════════ -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- ════════════════════════════════════════════
+     SIDEBAR
+════════════════════════════════════════════ -->
+<aside class="sidebar" id="sidebar">
+  <!-- Logo -->
+  <div class="sidebar-logo">
+    <div class="logo-mark">
+      <div class="logo-icon">📦</div>
+      <div>
+        <div class="logo-text">Warehouse Automation</div>
+        <div class="logo-tagline">Retail Intelligence</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Nav: Overview -->
+  <div class="nav-section">
+    <div class="nav-label">Overview</div>
+    <div class="nav-item active" data-page="dashboard" onclick="goTo('dashboard')">
+      <span class="icon">🏠</span><span class="nav-text">Dashboard</span>
+    </div>
+    <div class="nav-item" data-page="alerts" onclick="goTo('alerts')">
+      <span class="icon">🔔</span><span class="nav-text">Alerts</span>
+      <span class="badge-dot" id="alertBadge" style="display:none">0</span>
+    </div>
+  </div>
+
+  <!-- Nav: Inventory -->
+  <div class="nav-section">
+    <div class="nav-label">Inventory</div>
+    <div class="nav-item" data-page="products" onclick="goTo('products')">
+      <span class="icon">📋</span><span class="nav-text">Products</span>
+    </div>
+    <div class="nav-item" data-page="billing" onclick="goTo('billing')">
+      <span class="icon">🧾</span><span class="nav-text">Billing Desk</span>
+    </div>
+    <div class="nav-item" data-page="bills" onclick="goTo('bills')">
+      <span class="icon">📜</span><span class="nav-text">Bill History</span>
+    </div>
+  </div>
+
+  <!-- Nav: Forecasting -->
+  <div class="nav-section">
+    <div class="nav-label">Forecasting</div>
+    <div class="nav-item" data-page="forecast" onclick="goTo('forecast')">
+      <span class="icon">📈</span><span class="nav-text">AI Forecast</span>
+    </div>
+    <div class="nav-item" data-page="reorder" onclick="goTo('reorder')">
+      <span class="icon">🔄</span><span class="nav-text">Reorder Plan</span>
+    </div>
+  </div>
+
+  <!-- Nav: Data -->
+  <div class="nav-section">
+    <div class="nav-label">Data</div>
+    <div class="nav-item" data-page="upload" onclick="goTo('upload')">
+      <span class="icon">⬆️</span><span class="nav-text">Upload CSV</span>
+    </div>
+    <div class="nav-item" data-page="reports" onclick="goTo('reports')">
+      <span class="icon">📥</span><span class="nav-text">Reports</span>
+    </div>
+    <div class="nav-item" data-page="manual" onclick="goTo('manual')">
+      <span class="icon">✏️</span><span class="nav-text">Manual Entry</span>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="sidebar-footer" style="display:flex; flex-direction:column; gap:12px;">
+    <div class="api-status">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">Connecting…</span>
+    </div>
+    <div class="nav-item" data-page="settings" onclick="goTo('settings')">
+      <span class="icon">⚙️</span><span class="nav-text">Settings</span>
+    </div>
+    <div class="nav-item" onclick="openModal('supportModal')">
+      <span class="icon">📞</span><span class="nav-text">Support</span>
+    </div>
+    <div class="nav-item" onclick="logout()" style="color: #ff4d4f;">
+      <span class="icon">🚪</span><span class="nav-text">Logout</span>
+    </div>
+  </div>
+</aside>
+
+<!-- ════════════════════════════════════════════
+     MAIN
+════════════════════════════════════════════ -->
+<main class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <button class="topbar-menu-btn" id="menuBtn" aria-label="Open menu">☰</button>
+    <div style="min-width:0">
+      <div class="topbar-title" id="pageTitle">Dashboard</div>
+      <div class="topbar-sub"   id="pageSub">Real-time inventory overview</div>
+    </div>
+    <div class="topbar-right">
+      <span id="currentDateTime" class="mono" style="font-size:11px;color:var(--text3)"></span>
+    </div>
+
+  </div>
+
+  <!-- ════ PAGE CONTENT ════ -->
+  <div class="content">
+
+    <!-- ══════════════════════════════════════
+         DASHBOARD
+    ══════════════════════════════════════ -->
+    <div class="page active" id="page-dashboard">
+
+      <!-- Welcome Banner -->
+      <div class="welcome-banner" id="welcomeBanner">
+        <div class="welcome-emoji" id="welcomeEmoji">👋</div>
+        <div class="welcome-text">
+          <h2 id="welcomeGreeting">Good Morning!</h2>
+          <p id="welcomeSubtext">Your shop is running smoothly today. Here's your quick overview.</p>
+        </div>
+        <div class="welcome-tip" id="welcomeTip">
+          <strong>💡 Tip:</strong> <span id="tipText">Use the Billing Desk to quickly generate bills and track sales.</span>
+        </div>
+      </div>
+
+      <!-- KPI Row 1 -->
+      <div class="kpi-grid">
+        <div class="kpi-card blue">
+          <div class="kpi-icon">📦</div>
+          <div class="kpi-label">Total Products</div>
+          <div class="kpi-value" id="kpiProducts">—</div>
+          <div class="kpi-sub">Active in inventory</div>
+        </div>
+        <div class="kpi-card teal">
+          <div class="kpi-icon">💰</div>
+          <div class="kpi-label">Inventory Value</div>
+          <div class="kpi-value" id="kpiValue">—</div>
+          <div class="kpi-sub">At selling price</div>
+        </div>
+        <div class="kpi-card amber">
+          <div class="kpi-icon">⚠️</div>
+          <div class="kpi-label">Low Stock Items</div>
+          <div class="kpi-value" id="kpiLow">—</div>
+          <div class="kpi-sub">Need reorder</div>
+        </div>
+        <div class="kpi-card rose">
+          <div class="kpi-icon">🚨</div>
+          <div class="kpi-label">Out of Stock</div>
+          <div class="kpi-value" id="kpiOut">—</div>
+          <div class="kpi-sub">Immediate attention</div>
+        </div>
+      </div>
+
+      <!-- KPI Row 2 -->
+      <div class="kpi-grid-2">
+        <div class="kpi-card blue">
+          <div class="kpi-icon">🧾</div>
+          <div class="kpi-label">Today's Revenue</div>
+          <div class="kpi-value" id="kpiTodayRevenue">—</div>
+          <div class="kpi-sub" id="kpiTodayBills">— bills today</div>
+        </div>
+        <div class="kpi-card teal">
+          <div class="kpi-icon">📊</div>
+          <div class="kpi-label">Total Revenue</div>
+          <div class="kpi-value" id="kpiTotalRevenue">—</div>
+          <div class="kpi-sub" id="kpiTotalBills">— total bills</div>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="charts-row triple">
+        <div class="chart-card">
+          <div class="chart-title"><span>📊</span> 7-Day Sales Trend</div>
+          <div class="chart-wrap"><canvas id="salesChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title"><span>🏷️</span> By Category</div>
+          <div class="chart-wrap"><canvas id="categoryChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title"><span>🏆</span> Top Products</div>
+          <div id="topProductsList" style="padding-top:4px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         PRODUCTS
+    ══════════════════════════════════════ -->
+    <div class="page" id="page-products">
+      <div class="table-card">
+        <div class="table-header">
+          <h3>Product Inventory</h3>
+          <div class="actions">
+            <input type="text" class="search-box" placeholder="🔍 Search products…" id="productSearch" oninput="filterProducts()">
+            <select class="select-box" id="statusFilter" onchange="filterProducts()">
+              <option value="">All Statuses</option>
+              <option value="ok">In Stock</option>
+              <option value="low">Low Stock</option>
+              <option value="out">Out of Stock</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="openProductModal()">+ Add Product</button>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Category</th>
+                <th>Stock</th>
+                <th>Daily Sales/Unit</th>
+                <th>Price (₹)</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="productTableBody">
+              <tr><td colspan="7"><div class="empty-state"><div class="loading-spinner"></div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         BILLING DESK
+    ══════════════════════════════════════ -->
+    <div class="page" id="page-billing">
+      <div class="billing-layout">
+
+        <!-- Product picker -->
+        <div class="product-picker">
+          <h3 class="section-title">🛒 Add Products</h3>
+          <input type="text" class="search-box" style="width:100%" placeholder="🔍 Search products…" id="billingSearch" oninput="filterBillingProducts()">
+          <div class="product-grid" id="billingProductGrid">
+            <div class="empty-state"><div class="loading-spinner"></div></div>
+          </div>
+        </div>
+
+        <!-- Cart / bill panel -->
+        <div class="billing-cart">
+          <div class="billing-cart-header">
+            <h3>Current Bill</h3>
+            <span class="cart-count" id="cartCount">0 items</span>
+          </div>
+
+          <!-- Customer fields -->
+          <div class="cart-customer">
+            <input class="form-input" style="flex:1;min-width:130px" placeholder="Customer name"   id="customerName">
+            <input class="form-input" style="flex:1;min-width:120px" placeholder="Phone (optional)" id="customerPhone">
+          </div>
+
+          <!-- Cart items -->
+          <div class="cart-body" id="cartBody">
+            <div class="cart-empty">
+              <div class="icon">🛒</div>
+              <p>Add products to start a bill</p>
+            </div>
+          </div>
+
+          <!-- Summary + checkout -->
+          <div class="cart-summary">
+            <div class="discount-gst-row">
+              <div>
+                <label style="font-size:11px;color:var(--text3);font-weight:600;display:block;margin-bottom:4px">Discount %</label>
+                <input type="number" class="form-input" id="discountPct" value="0" min="0" max="100" oninput="updateCartSummary()">
+              </div>
+              <div>
+                <label style="font-size:11px;color:var(--text3);font-weight:600;display:block;margin-bottom:4px">GST %</label>
+                <input type="number" class="form-input" id="gstRate" value="18" min="0" max="28" oninput="updateCartSummary()">
+              </div>
+            </div>
+
+            <div class="summary-row"><span>Subtotal</span><span id="summarySubtotal">₹0.00</span></div>
+            <div class="summary-row"><span>Discount</span><span id="summaryDiscount">-₹0.00</span></div>
+            <div class="summary-row"><span>GST</span><span id="summaryGst">₹0.00</span></div>
+            <div class="summary-row total"><span>TOTAL</span><span id="summaryTotal">₹0.00</span></div>
+
+            <div class="cart-actions" style="flex-direction:column;gap:10px">
+              <!-- Payment type toggle buttons -->
+              <div>
+                <label style="font-size:11px;color:var(--text3);font-weight:600;display:block;margin-bottom:6px">Payment Method</label>
+                <div class="payment-toggle" id="paymentToggle">
+                  <button type="button" class="pay-btn active" data-value="cash" onclick="selectPayment('cash')">
+                    <span style="font-size:16px">💵</span> Cash
+                  </button>
+                  <button type="button" class="pay-btn" data-value="card" onclick="selectPayment('card')">
+                    <span style="font-size:16px">💳</span> Card
+                  </button>
+                  <button type="button" class="pay-btn" data-value="upi" onclick="selectPayment('upi')">
+                    <span style="font-size:16px">📱</span> UPI
+                  </button>
+                </div>
+                <input type="hidden" id="paymentMethod" value="cash">
+              </div>
+
+              <button class="btn btn-success generate-bill-btn" onclick="submitBill()">
+                <span style="font-size:18px">🧾</span> Generate Bill &amp; Download PDF
+              </button>
+            </div>
+            <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:8px;justify-content:center" onclick="clearCart()">Clear Cart</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         BILL HISTORY
+    ══════════════════════════════════════ -->
+    <div class="page" id="page-bills">
+      <div class="kpi-grid-2" style="margin-bottom:18px">
+        <div class="kpi-card blue"><div class="kpi-icon">🧾</div><div class="kpi-label">Today Revenue</div><div class="kpi-value" id="bHistToday">—</div></div>
+        <div class="kpi-card teal"><div class="kpi-icon">📊</div><div class="kpi-label">Total Revenue</div><div class="kpi-value" id="bHistTotal">—</div></div>
+      </div>
+      <div class="table-card">
+        <div class="table-header">
+          <h3>Bill History</h3>
+          <div class="actions">
+            <button class="btn btn-ghost btn-sm" onclick="loadBills()">↻ Refresh</button>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Bill #</th><th>Customer</th><th>Items</th><th>Total</th>
+                <th>Payment</th><th>Status</th><th>Date</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="billTableBody">
+              <tr><td colspan="8"><div class="empty-state"><div class="loading-spinner"></div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         FORECAST
+    ══════════════════════════════════════ -->
+    <div class="page" id="page-forecast">
+      <div class="forecast-controls">
+        <div class="control-group">
+          <label>Product</label>
+          <select class="select-box" id="forecastProduct" style="width:220px">
+            <option value="">— Select Product —</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label>Forecast Days</label>
+          <select class="select-box" id="forecastDays">
+            <option value="7">7 Days</option>
+            <option value="14">14 Days</option>
+            <option value="30" selected>30 Days</option>
+            <option value="60">60 Days</option>
+            <option value="90">90 Days</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="runForecast()">⚡ Run Forecast</button>
+      </div>
+
+      <!-- Results -->
+      <div id="forecastResults" style="display:none">
+        <div class="metric-row" id="forecastMetrics"></div>
+        <div class="chart-card">
+          <div class="chart-title">
+            <span>📈</span> Demand Forecast
+            <span id="forecastModelBadge" class="tag tag-blue" style="margin-left:auto;font-size:11px"></span>
+          </div>
+          <div class="chart-wrap" style="height:270px"><canvas id="forecastChart"></canvas></div>
+        </div>
+        <div class="table-card" style="margin-top:16px">
+          <div class="table-header"><h3>Forecast Breakdown</h3></div>
+          <div class="table-responsive">
+            <table>
+              <thead><tr><th>Date</th><th>Predicted</th><th>Low Est.</th><th>High Est.</th></tr></thead>
+              <tbody id="forecastTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty -->
+      <div id="forecastEmpty" class="empty-state">
+        <div class="icon">📈</div>
+        <p>Select a product and click Run Forecast to generate AI demand predictions</p>
+      </div>
+
+      <!-- Loading -->
+      <div id="forecastLoading" style="display:none;text-align:center;padding:50px 20px">
+        <div class="loading-spinner" style="width:38px;height:38px;border-width:3px;margin:0 auto"></div>
+        <p id="forecastLoadingMsg" style="margin-top:14px;color:var(--text2);font-size:15px;font-weight:500">Initializing…</p>
+        <p style="margin-top:5px;color:var(--text3);font-size:12px">This may take 15–30 seconds on first run</p>
+        <div style="margin-top:18px;display:inline-flex;flex-direction:column;gap:8px;text-align:left;min-width:220px">
+          <div class="forecast-step" id="fstep1" style="display:flex;align-items:center;gap:10px;color:var(--text3);font-size:12px">
+            <span class="fstep-icon">⏳</span><span>Loading historical sales data</span>
+          </div>
+          <div class="forecast-step" id="fstep2" style="display:flex;align-items:center;gap:10px;color:var(--text3);font-size:12px;opacity:0.4">
+            <span class="fstep-icon">⏳</span><span>Preprocessing &amp; feature engineering</span>
+          </div>
+          <div class="forecast-step" id="fstep3" style="display:flex;align-items:center;gap:10px;color:var(--text3);font-size:12px;opacity:0.4">
+            <span class="fstep-icon">⏳</span><span>Training ML models (Prophet, XGBoost…)</span>
+          </div>
+          <div class="forecast-step" id="fstep4" style="display:flex;align-items:center;gap:10px;color:var(--text3);font-size:12px;opacity:0.4">
+            <span class="fstep-icon">⏳</span><span>Selecting best model &amp; generating forecast</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         REORDER PLAN
+    ══════════════════════════════════════ -->
+    <div class="page" id="page-reorder">
+
+      <!-- ── Header row ──────────────────────────────────────────────── -->
+      <div class="table-header" style="margin-bottom:20px">
+        <h2 style="font-size:18px;font-weight:600">📦 Reorder Planning</h2>
+        <div class="actions" style="gap:10px;flex-wrap:wrap">
+
+          <!-- Backup Days Selector -->
+          <div style="display:flex;align-items:center;gap:8px;background:var(--bg2);border-radius:8px;padding:6px 12px">
+            <span style="font-size:12px;color:var(--text3);white-space:nowrap">🗄️ Backup Stock:</span>
+            <select class="select-box" id="globalBackupDays" onchange="onBackupDaysChange()"
+                    style="border:none;background:transparent;font-size:13px;font-weight:600;color:var(--accent);padding:0;min-width:90px">
+              <option value="3">3 days (tiny)</option>
+              <option value="5" selected>5 days (small)</option>
+              <option value="7">7 days (medium)</option>
+              <option value="14">14 days (large)</option>
+              <option value="30">30 days (bulk)</option>
+            </select>
+          </div>
+
+          <!-- Inventory size indicator pill -->
+          <div id="inventorySizePill"
+               style="font-size:12px;font-weight:600;letter-spacing:0.5px;height:36px;padding:0 14px;border-radius:8px;display:flex;align-items:center;justify-content:center;white-space:nowrap;background:rgba(34,211,238,0.12);border:1px solid rgba(34,211,238,0.3);color:#22d3ee;box-shadow:0 0 12px rgba(34,211,238,0.1)">
+            📦 Small Inventory
+          </div>
+
+          <select class="select-box" id="reorderFilter" onchange="loadReorderPlan()">
+            <option value="all">Show All</option>
+            <option value="today">Reorder Today</option>
+            <option value="tomorrow">Reorder Tomorrow</option>
+            <option value="7days">Next 7 Days</option>
+            <option value="10days">Next 10 Days</option>
+            <option value="ordered">Already Ordered</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="loadReorderPlan()">↻ Refresh Plan</button>
+        </div>
+      </div>
+
+      <!-- Backup days description banner -->
+      <div id="backupDaysBanner"
+           style="background:var(--bg2);border-left:3px solid var(--accent);border-radius:6px;
+                  padding:10px 16px;margin-bottom:16px;font-size:12px;color:var(--text2);line-height:1.6">
+        <strong style="color:var(--accent)">5-day backup</strong> —
+        Reorder points and storage caps are set for <strong>5 days</strong> of demand.
+        Increase backup days if you have more storage space; decrease for a lean / just-in-time operation.
+      </div>
+
+      <!-- ── Plan table ───────────────────────────────────────────────── -->
+      <div class="table-card">
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Stock</th>
+                <th>Reorder Point</th>
+                <th>Storage Cap</th>
+                <th>Days Left</th>
+                <th>Target Date</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="reorderPlanBody">
+              <tr><td colspan="8"><div class="empty-state"><div class="loading-spinner"></div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── Deep Analysis section ────────────────────────────────────── -->
+      <div style="margin-top:30px;border-top:1px solid var(--bg2);padding-top:20px">
+        <h3 style="font-size:14px;color:var(--text3);margin-bottom:15px">🔬 Detailed Reorder Analysis</h3>
+
+        <div class="forecast-controls" style="flex-wrap:wrap;gap:12px">
+          <div class="control-group">
+            <label>Select Product</label>
+            <input list="reorderProductList" class="form-input" id="reorderProduct"
+                   style="width:220px" placeholder="🔍 Search or select product…">
+            <datalist id="reorderProductList"></datalist>
+          </div>
+
+          <!-- Per-product backup days override -->
+          <div class="control-group">
+            <label>Backup Days (this product)</label>
+            <select class="select-box" id="productBackupDays">
+              <option value="">— use global setting —</option>
+              <option value="3">3 days</option>
+              <option value="5">5 days</option>
+              <option value="7">7 days</option>
+              <option value="14">14 days</option>
+              <option value="30">30 days</option>
+            </select>
+          </div>
+
+          <button class="btn btn-primary" onclick="runReorder()" style="align-self:flex-end">
+            ⚡ Run Deep Analysis
+          </button>
+        </div>
+
+        <!-- Loading -->
+        <div id="reorderLoading" style="display:none;text-align:center;padding:50px">
+          <div class="loading-spinner" style="width:30px;height:30px;border-width:3px;margin:0 auto"></div>
+          <p style="margin-top:12px;color:var(--text3)">Calculating reorder plan…</p>
+        </div>
+
+        <!-- Empty -->
+        <div id="reorderEmpty" class="empty-state">
+          <div class="icon">📦</div>
+          <p>Select a product and click Run Deep Analysis to calculate EOQ and reorder points</p>
+        </div>
+
+        <!-- Results -->
+        <div id="reorderResults" style="display:none;margin-top:15px">
+          <div class="metric-row" id="reorderMetrics"></div>
+
+          <!-- Filter pipeline breakdown -->
+          <div class="table-card" style="margin-top:16px">
+            <div class="table-header">
+              <h3>Calculation Breakdown</h3>
+              <span id="reorderInventoryLabel"
+                    style="font-size:12px;font-weight:600;padding:4px 12px;border-radius:6px;background:rgba(34,211,238,0.12);border:1px solid rgba(34,211,238,0.3);color:#22d3ee;box-shadow:0 0 12px rgba(34,211,238,0.1)"></span>
+            </div>
+            <div class="table-responsive">
+              <table><tbody id="reorderTableBody"></tbody></table>
+            </div>
+          </div>
+
+          <!-- Filter pipeline visual -->
+          <div class="table-card" style="margin-top:12px">
+            <div class="table-header"><h3>🔽 Filter Pipeline Applied</h3></div>
+            <div id="filterPipeline" style="padding:14px 18px;display:flex;flex-wrap:wrap;gap:8px;align-items:center"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         UPLOAD CSV
+    ══════════════════════════════════════ -->
+    <div class="page" id="page-upload">
+      <div style="max-width:580px;margin:0 auto">
+        <label for="csvFile">
+          <div class="upload-zone" id="uploadZone">
+            <div class="upload-zone-icon">📁</div>
+            <h3>Upload Sales CSV</h3>
+            <p>Drag &amp; drop or click to select your CSV file</p>
+            <p style="margin-top:8px;font-size:11px;color:var(--text3)">
+              Max 10MB · Columns: Date, Product_ID, Product_Name, Category, Units_Sold, Selling_Price, Current_Stock, Supplier_Lead_Time
+            </p>
+          </div>
+        </label>
+        <input type="file" id="csvFile" accept=".csv" onchange="handleFileUpload()">
+
+        <div id="uploadStatus" style="margin-top:16px;display:none">
+          <div class="chart-card"><div id="uploadStatusContent"></div></div>
+        </div>
+
+        <div style="margin-top:22px">
+          <h3 class="section-title">📌 Uploaded Files</h3>
+          <div id="uploadedFiles" class="chart-card">
+            <div class="empty-state"><div class="loading-spinner"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         MANUAL ENTRY
+    ══════════════════════════════════════ -->
+    <div class="page" id="page-manual">
+      <div class="manual-layout">
+        <div class="chart-card">
+          <h3 class="section-title">✏️ Add Daily Sales</h3>
+          <div class="form-group">
+            <label>Product</label>
+            <select class="form-input" id="manualProduct">
+              <option value="">— Select Product —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" class="form-input" id="manualDate">
+          </div>
+          <div class="form-group">
+            <label>Units Sold</label>
+            <input type="number" class="form-input" id="manualUnits" placeholder="0" min="1">
+          </div>
+          <div class="form-group">
+            <label>Selling Price (₹) <span style="color:var(--text3)">(leave blank for default)</span></label>
+            <input type="number" class="form-input" id="manualPrice" placeholder="Auto">
+          </div>
+          <div class="form-group">
+            <label>Notes</label>
+            <textarea class="form-input" id="manualNotes" placeholder="Optional notes…"></textarea>
+          </div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="submitManualSale()">Save Entry</button>
+        </div>
+
+        <div class="table-card">
+          <div class="table-header">
+            <h3>Manual Sales Log</h3>
+            <div class="actions"><button class="btn btn-ghost btn-sm" onclick="loadManualSales()">↻ Refresh</button></div>
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead><tr><th>Date</th><th>Product</th><th>Units</th><th>Price (₹)</th><th>Notes</th></tr></thead>
+              <tbody id="manualSalesBody">
+                <tr><td colspan="5"><div class="empty-state"><div class="loading-spinner"></div></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         ALERTS
+    ══════════════════════════════════════ -->
+    <div class="page" id="page-alerts">
+      <div class="kpi-grid-2" style="margin-bottom:20px">
+        <div class="chart-card">
+          <div class="chart-title"><span style="font-size:18px">📊</span> Real-time Critical Stock</div>
+          <div id="lowStockStats" style="margin-top:10px">
+            <div class="empty-state"><div class="loading-spinner"></div></div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title"><span style="font-size:18px">🔔</span> System Notifications</div>
+          <div id="alertsList" style="max-height:400px;overflow-y:auto">
+            <div class="empty-state"><div class="loading-spinner"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <div class="table-header">
+          <h3>Items Needing Attention</h3>
+          <div class="actions">
+            <button class="btn btn-ghost btn-sm" onclick="loadAlerts()">↻ Refresh All</button>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table id="lowStockTable">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Category</th>
+                <th>Stock Level</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="lowStockBody">
+              <tr><td colspan="5"><div class="empty-state">No critical stock items</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         REPORTS
+    ══════════════════════════════════════ -->
+    <div class="page" id="page-reports">
+      <div class="section-title">📥 Export Reports</div>
+      <div class="reports-grid">
+
+        <div class="chart-card" style="display:flex;flex-direction:column;gap:12px">
+          <div style="font-size:15px;font-weight:600">📦 Inventory Report</div>
+          <div style="font-size:13px;color:var(--text2)">Full product catalog with stock levels, reorder points, and inventory value.</div>
+          <button class="btn btn-primary btn-sm" onclick="downloadReport('inventory/excel')">⬇ Download Excel</button>
+        </div>
+
+        <div class="chart-card" style="display:flex;flex-direction:column;gap:12px">
+          <div style="font-size:15px;font-weight:600">🔄 Reorder Status Report</div>
+          <div style="font-size:13px;color:var(--text2)">Products needing reorder now, with current stock and suggested quantities.</div>
+          <button class="btn btn-primary btn-sm" onclick="downloadReport('reorder/excel')">⬇ Download Excel</button>
+        </div>
+
+        <div class="chart-card" style="display:flex;flex-direction:column;gap:12px">
+          <div style="font-size:15px;font-weight:600">📊 Sales History Report</div>
+          <div style="font-size:13px;color:var(--text2)">Units sold, revenue, season, and festival data for selected period.</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <select class="select-box" id="salesReportDays">
+              <option value="7">Last 7 days</option>
+              <option value="30" selected>Last 30 days</option>
+              <option value="90">Last 90 days</option>
+              <option value="365">Last 12 months</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="downloadReport('sales/excel?days='+document.getElementById('salesReportDays').value)">⬇ Download Excel</button>
+          </div>
+        </div>
+
+        <div class="chart-card" style="display:flex;flex-direction:column;gap:12px">
+          <div style="font-size:15px;font-weight:600">🧾 Billing &amp; Revenue Report</div>
+          <div style="font-size:13px;color:var(--text2)">All invoices with daily revenue breakdown sheet.</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <select class="select-box" id="billingReportDays">
+              <option value="7">Last 7 days</option>
+              <option value="30" selected>Last 30 days</option>
+              <option value="90">Last 90 days</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="downloadReport('billing/excel?days='+document.getElementById('billingReportDays').value)">⬇ Download Excel</button>
+          </div>
+        </div>
+
+        <div class="chart-card" style="display:flex;flex-direction:column;gap:12px">
+          <div style="font-size:15px;font-weight:600">📈 Forecast Report</div>
+          <div style="font-size:13px;color:var(--text2)">AI-generated demand predictions for all products that have been forecasted.</div>
+          <button class="btn btn-primary btn-sm" onclick="downloadReport('forecast/excel')">⬇ Download Excel</button>
+        </div>
+
+      </div>
+
+      <!-- AI Model Management -->
+      <div class="section-title">🤖 AI Model Management</div>
+      <div class="chart-card" style="margin-bottom:16px">
+        <div style="font-size:13px;color:var(--text2);margin-bottom:14px">
+          Force-retrain the forecasting model for a product. Useful after uploading new CSV data.
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+          <div class="control-group">
+            <label>Product</label>
+            <select class="select-box" id="retrainProduct" style="width:220px">
+              <option value="">— Select Product —</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="retrainModel()" id="retrainBtn">🔁 Retrain Model</button>
+          <div id="retrainStatus" style="font-size:13px;color:var(--text3)"></div>
+        </div>
+      </div>
+
+      <div class="table-card" id="modelCompareCard" style="display:none">
+        <div class="table-header"><h3>📊 Model Performance Comparison</h3></div>
+        <div class="table-responsive">
+          <table>
+            <thead><tr><th>Model</th><th>MAE ↓</th><th>RMSE ↓</th><th>MAPE % ↓</th><th>Status</th></tr></thead>
+            <tbody id="modelCompareBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         SETTINGS
+    ══════════════════════════════════════ -->
+    <div class="page" id="page-settings">
+      <div class="settings-layout">
+        
+        <!-- Profile Card -->
+        <div class="chart-card profile-card" style="text-align: center;">
+          <div class="profile-pic-wrapper" style="position: relative; display: inline-block; margin-bottom: 16px;">
+            <img id="userProfilePic" src="https://ui-avatars.com/api/?name=User&background=4f6ef7&color=fff&size=120" alt="Profile Picture" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid var(--border);">
+            <button class="btn btn-primary" style="position: absolute; bottom: 0; right: 0; border-radius: 50%; width: 34px; height: 34px; padding: 0; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3);" onclick="document.getElementById('profilePicInput').click()">
+              <span style="font-size: 14px;">✏️</span>
+            </button>
+            <input type="file" id="profilePicInput" style="display: none" accept="image/*" onchange="handleProfilePicChange(event)">
+          </div>
+          <h3 id="settingsUserName" style="font-size: 20px; font-weight: 700; margin-bottom: 6px;">User Name</h3>
+          <p id="settingsUserRole" style="font-size: 13px; color: var(--text3); margin-bottom: 20px;">Administrator</p>
+          <div style="border-top: 1px solid var(--border); padding-top: 20px;">
+            <button class="btn btn-danger" style="width: 100%; justify-content: center;" onclick="logout()">
+              <span style="font-size: 16px;">🚪</span> Logout
+            </button>
+          </div>
+        </div>
+
+        <!-- Settings Forms -->
+        <div class="settings-forms" style="display: flex; flex-direction: column; gap: 20px;">
+          
+          <div class="chart-card">
+            <h3 class="section-title">👤 Personal Information</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" class="form-input" id="setFullName" placeholder="Your Name">
+              </div>
+              <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" class="form-input" id="setEmail" placeholder="you@example.com">
+              </div>
+            </div>
+            <div class="form-group">
+                <label>Phone Number</label>
+                <input type="text" class="form-input" id="setPhone" placeholder="Your Phone Number">
+            </div>
+            <button class="btn btn-primary" onclick="saveProfileInfo()">Save Profile</button>
+          </div>
+
+          <div class="chart-card">
+            <h3 class="section-title">🔒 Change Password</h3>
+            <div class="form-group">
+              <label>Current Password</label>
+              <input type="password" class="form-input" id="setOldPassword" placeholder="Enter current password">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>New Password</label>
+                <input type="password" class="form-input" id="setNewPassword" placeholder="Enter new password">
+              </div>
+              <div class="form-group">
+                <label>Confirm Password</label>
+                <input type="password" class="form-input" id="setConfirmPassword" placeholder="Confirm new password">
+              </div>
+            </div>
+            <button class="btn btn-warning" onclick="changePassword()">Update Password</button>
+          </div>
+          
+          <div class="chart-card">
+             <h3 class="section-title">⚙️ Application Preferences</h3>
+             <div class="form-group" style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--border);">
+               <div>
+                 <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">Notifications</div>
+                 <div style="font-size: 12px; color: var(--text3);">Receive alerts for low stock and new orders</div>
+               </div>
+               <label class="toggle-switch">
+                 <input type="checkbox" checked id="setNotificationsToggle">
+                 <span class="slider round"></span>
+               </label>
+             </div>
+             
+             <div class="form-group" style="display: flex; align-items: center; justify-content: space-between; padding-top: 12px;">
+               <div>
+                 <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">Dark Mode</div>
+                 <div style="font-size: 12px; color: var(--text3);">Toggle dark theme across the application</div>
+               </div>
+               <label class="toggle-switch">
+                 <input type="checkbox" checked id="setThemeToggle" onchange="toggleTheme()">
+                 <span class="slider round"></span>
+               </label>
+             </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+
+<!-- ════════════════════════════════════════════
+     PRODUCT MODAL
+════════════════════════════════════════════ -->
+<div class="modal-overlay" id="productModal">
+  <div class="modal">
+    <div class="modal-title" id="productModalTitle">Add New Product</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Product ID *</label>
+        <input class="form-input" id="fProductId" placeholder="e.g. P001">
+      </div>
+      <div class="form-group">
+        <label>Product Name *</label>
+        <input class="form-input" id="fProductName" placeholder="e.g. Cold Drink">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Category *</label>
+        <input class="form-input" id="fCategory" placeholder="e.g. Beverages">
+      </div>
+      <div class="form-group">
+        <label>Unit</label>
+        <select class="form-input" id="fUnit">
+          <option>pcs</option><option>kg</option><option>ltr</option>
+          <option>box</option><option>dozen</option><option>pack</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Current Stock *</label>
+        <input type="number" class="form-input" id="fStock" placeholder="0" oninput="updateStockFeedback()">
+        <div id="stockFeedback" style="font-size:10px;margin-top:4px;color:var(--text3);min-height:14px"></div>
+      </div>
+      <div class="form-group">
+        <label>Reorder Point</label>
+        <input type="number" class="form-input" id="fReorderPoint" placeholder="Auto-calculated">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Selling Price ₹ *</label>
+        <input type="number" class="form-input" id="fSellingPrice" placeholder="0.00">
+      </div>
+      <div class="form-group">
+        <label>Cost Price ₹</label>
+        <input type="number" class="form-input" id="fCostPrice" placeholder="0.00">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Supplier Lead Time (days)</label>
+        <input type="number" class="form-input" id="fLeadTime" value="5">
+      </div>
+      <div class="form-group"></div>
+    </div>
+    <div class="form-group">
+      <label>Description</label>
+      <textarea class="form-input" id="fDescription" placeholder="Optional product description…"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('productModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveProduct()">Save Product</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     BILL DETAIL MODAL
+════════════════════════════════════════════ -->
+<div class="modal-overlay" id="billModal">
+  <div class="modal" style="width:600px">
+    <div class="modal-title">Bill Details</div>
+    <div id="billModalContent"></div>
+    <div class="modal-actions">
+      <button class="btn btn-warning btn-sm" id="modalDownloadBtn" style="display:none" onclick="downloadBillFromModal()">
+        ⬇ Download PDF
+      </button>
+      <button class="btn btn-ghost" onclick="closeModal('billModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     QUICK ACTION FAB
+════════════════════════════════════════════ -->
+<div class="quick-fab" id="quickFab">
+  <div class="fab-actions" id="fabActions">
+    <button class="fab-action-btn" onclick="goTo('billing'); toggleFab();"><span class="fab-icon">🧾</span> New Bill</button>
+    <button class="fab-action-btn" onclick="openProductModal(); toggleFab();"><span class="fab-icon">📦</span> Add Product</button>
+    <button class="fab-action-btn" onclick="goTo('manual'); toggleFab();"><span class="fab-icon">✏️</span> Log Sale</button>
+    <button class="fab-action-btn" onclick="goTo('alerts'); toggleFab();"><span class="fab-icon">🔔</span> Alerts</button>
+  </div>
+  <button class="fab-main" id="fabMainBtn" onclick="toggleFab()" aria-label="Quick actions">⚡</button>
+</div>
+
+<!-- ════════════════════════════════════════════
+     CONFETTI CONTAINER
+════════════════════════════════════════════ -->
+<div class="confetti-container" id="confettiContainer"></div>
+
+<!-- ════════════════════════════════════════════
+     TOAST CONTAINER
+════════════════════════════════════════════ -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ════════════════════════════════════════════
+     SCRIPTS (deferred after DOM)
+════════════════════════════════════════════ -->
+<script src="reorder_functions.js" defer></script>
+<script src="app.js" defer></script>
+
+<!-- SUPPORT MODAL -->
+<div class="modal-overlay" id="supportModal">
+  <div class="modal" style="max-width: 400px;">
+    <div class="modal-title">Contact Support</div>
+    <div style="padding: 20px 0; text-align: center;">
+      <div style="font-size: 40px; margin-bottom: 15px;">👋</div>
+      <p style="color: var(--text2); margin-bottom: 20px;">Need help or have questions? Reach out to us!</p>
+      <div style="display: flex; flex-direction: column; gap: 15px; align-items: flex-start; max-width: 250px; margin: 0 auto;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span style="font-size: 20px;">📧</span>
+          <div style="text-align: left;">
+            <div style="font-size: 11px; color: var(--text3);">Email</div>
+            <div style="font-weight: 500;">support@stocksense.in</div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span style="font-size: 20px;">📞</span>
+          <div style="text-align: left;">
+            <div style="font-size: 11px; color: var(--text3);">Phone</div>
+            <div style="font-weight: 500;">+91 98765 43210</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top: 20px; display: flex; justify-content: flex-end;">
+      <button class="btn btn-primary" onclick="closeModal('supportModal')">Close</button>
+    </div>
+  </div>
+</div>
+</body>
+
+</html>
